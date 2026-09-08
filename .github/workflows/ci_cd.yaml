@@ -1,0 +1,31 @@
+#github ci_cd.yaml for this repository
+
+name: CI/CD Pipeline for Development environment
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+
+#jobs -> build, lint, test using sonarqube, build image , test images using trivy, push to ecr, deploy to development eks cluster
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+        
+      - name: Build with Maven
+        working-directory: app
+        run: mvn clean install
