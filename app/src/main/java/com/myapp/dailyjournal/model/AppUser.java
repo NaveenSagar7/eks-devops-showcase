@@ -20,8 +20,13 @@ import java.time.LocalDate;
         uniqueConstraints = @UniqueConstraint(columnNames = "pan_hash"))
 public class AppUser {
 
+    /** Maximum stored length of {@link #name}. */
     private static final int NAME_MAX_LENGTH = 100;
+
+    /** Stored length of {@link #panHash}. */
     private static final int PAN_HASH_LENGTH = 64;
+
+    /** Stored length of {@link #panMasked}. */
     private static final int PAN_MASKED_LENGTH = 10;
 
     /** Primary key. */

@@ -15,7 +15,10 @@ import java.time.LocalDate;
  */
 public class RegisterForm {
 
+    /** Maximum allowed length of {@link #name}. */
     private static final int NAME_MAX_LENGTH = 100;
+
+    /** Maximum realistic value of {@link #age}. */
     private static final int AGE_MAX = 130;
 
     /** The user's display name. */

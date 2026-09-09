@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
  */
 public class PostForm {
 
+    /** Maximum allowed length of {@link #content}. */
     private static final int CONTENT_MAX_LENGTH = 5000;
 
     /** The post's body text. */

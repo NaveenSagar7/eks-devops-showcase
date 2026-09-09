@@ -20,6 +20,7 @@ import java.util.Optional;
 @Service
 public class JournalService {
 
+    /** Error message used when a PAN is already registered. */
     private static final String DUPLICATE_PAN_MESSAGE =
             "A user with this PAN is already registered";
 

@@ -23,8 +23,10 @@ import java.util.Optional;
 @Controller
 public class HomeController {
 
+    /** Session attribute key holding the logged-in user's id. */
     private static final String SESSION_USER_ID = "userId";
 
+    /** Error message shown when a returning-user PAN lookup fails. */
     private static final String NO_PAN_MATCH_MESSAGE =
             "We couldn't find that PAN. New here? Register instead.";
 
@@ -85,7 +87,8 @@ public class HomeController {
         }
         try {
             AppUser user = journalService.register(
-                    form.getName(), form.getAge(), form.getDob(), form.getPan());
+                    form.getName(), form.getAge(), form.getDob(),
+                    form.getPan());
             session.setAttribute(SESSION_USER_ID, user.getId());
             return "redirect:/post/new";
         } catch (IllegalStateException | IllegalArgumentException e) {
@@ -229,7 +232,7 @@ public class HomeController {
         return "redirect:/";
     }
 
-    private AppUser requireUser(HttpSession session) {
+    private AppUser requireUser(final HttpSession session) {
         Object id = session.getAttribute(SESSION_USER_ID);
         if (id == null) {
             return null;
