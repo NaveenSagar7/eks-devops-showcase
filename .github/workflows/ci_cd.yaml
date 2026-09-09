@@ -29,3 +29,19 @@ jobs:
       - name: Build with Maven
         working-directory: app
         run: mvn clean install
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+        
+      - name: Lint with Maven
+        working-directory: app
+        run: mvn checkstyle:check
