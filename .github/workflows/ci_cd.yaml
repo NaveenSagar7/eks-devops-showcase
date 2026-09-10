@@ -71,9 +71,15 @@ jobs:
   #         -Dsonar.host.url=$SONAR_HOST_URL
   #         -Dsonar.token=$SONAR_TOKEN
   #         -Dsonar.qualitygate.wait=true
-  docker-build:
-    name: Build Docker Image
+  build-and-push:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    # id-token: write is required so GitHub can issue the OIDC token that
+    # configure-aws-credentials exchanges for temporary AWS credentials -
+    # without this permission the OIDC assume-role step fails outright.
+    permissions:
+      id-token: write
+      contents: read
     #needs: [sonarqube]
     steps:
       - name: Checkout code
@@ -82,15 +88,31 @@ jobs:
       - name: set up docker
         uses: docker/setup-buildx-action@v2
 
-      # github.repository expands to the actual GitHub owner/repo casing
-      # (e.g. NaveenSagar7/eks-devops-showcase). Docker/OCI requires image
-      # repository names to be fully lowercase, so a username with capital
-      # letters breaks `docker build -t` unless we lowercase it ourselves
-      # first, since GitHub Actions expressions have no built-in lower().
-      - name: lowercase repo name
-        run: echo "REPO_LC=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-      - name: build docker image
-        run: docker build -f docker/Dockerfile -t ghcr.io/${{ env.REPO_LC }}/dailyjournal:latest .
+      # Logs Docker in to ECR using the temporary OIDC-assumed credentials,
+      # and exposes the account's registry URL as an output so we don't
+      # have to hardcode the AWS account id anywhere in this file.
+      - name: login to ecr
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Tags images with the short commit SHA (same 7-char hash GitHub
+      # shows next to each commit) instead of :latest, so every image is
+      # traceable back to the exact commit it was built from.
+      - name: short sha
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - name: build and push docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: ${{ steps.ecr-login.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ env.SHORT_SHA }}
   
   
