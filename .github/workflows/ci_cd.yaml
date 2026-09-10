@@ -82,8 +82,16 @@ jobs:
       - name: set up docker
         uses: docker/setup-buildx-action@v2
 
+      # github.repository expands to the actual GitHub owner/repo casing
+      # (e.g. NaveenSagar7/eks-devops-showcase). Docker/OCI requires image
+      # repository names to be fully lowercase, so a username with capital
+      # letters breaks `docker build -t` unless we lowercase it ourselves
+      # first, since GitHub Actions expressions have no built-in lower().
+      - name: lowercase repo name
+        run: echo "REPO_LC=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
       - name: build docker image
         working-directory: docker
-        run: docker build -t ghcr.io/${{ github.repository }}/dailyjournal:latest .
+        run: docker build -t ghcr.io/${{ env.REPO_LC }}/dailyjournal:latest .
   
   
