@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# app/secret.yaml and db/secret.yaml are deliberately NOT listed here -
+# they're created imperatively with kubectl (see the comments in those
+# files), so `kubectl apply -k` never overwrites real secret values with
+# their placeholder CHANGE_ME_... contents.
+resources:
+  # - namespaces.yaml   # create manually and generate secrets before applying this kustomization
+  - db/storageclass.yaml
+  - db/serviceaccount.yaml
+  - db/statefulset.yaml
+  - db/service.yaml
+  - app/serviceaccount.yaml
+  - app/configmap.yaml
+  - app/deployment.yaml
+  - app/service.yaml
+  - ingress.yaml
+  - networkpolicy/app-netpol.yaml
+  - networkpolicy/db-netpol.yaml
+  # Requires the kube-prometheus-stack CRDs (ServiceMonitor, PrometheusRule)
+  # and its Grafana dashboard sidecar to already be installed in `monitoring`.
+  - monitoring/servicemonitor-postgres.yaml
+  - monitoring/prometheusrule-myapp.yaml
+  - monitoring/grafana-dashboard-myapp.yaml
