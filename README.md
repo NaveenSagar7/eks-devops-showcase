@@ -24,6 +24,7 @@ across three genuinely separate environments (dev, QA, prod).
 - [How Kustomize's base/overlays work here](#how-kustomizes-baseoverlays-work-here)
 - [The CI/CD pipeline, in short](#the-cicd-pipeline-in-short)
 - [Prerequisites to make this actually work](#prerequisites-to-make-this-actually-work)
+- [How to Execute](#how-to-execute)
 - [Local development](#local-development-no-kubernetes-needed)
 - [Hardening notes](#hardening-notes)
 
@@ -112,6 +113,10 @@ docker/
 k8s/
   base/                         The real manifests - see "Kustomize" below
   overlays/{dev,qa,prod}/       Per-environment patches on top of base/
+scripts/build-and-push.sh      LEGACY - a manual build+push script from before
+                                 the CI pipeline existed. Fully superseded by
+                                 .github/workflows/ci_cd.yaml; kept only for
+                                 reference, not part of the real deploy path.
 ```
 
 The EKS cluster, ECR repos, and ALB controller IRSA setup are **not**
@@ -243,6 +248,33 @@ fully self-contained and does, in order:
 - [ ] `postgres-credentials` once, in the shared `myapp-db` namespace
       (see `k8s/base/db/secret.yaml`) - must use the same Postgres password
       as every `app-secrets` copy
+
+## How to Execute
+
+In order, start to finish:
+
+1. Provision an EKS cluster (`eksctl`, Terraform, or the console).
+2. Install the AWS Load Balancer Controller (needed for `k8s/base/ingress.yaml`)
+   and kube-prometheus-stack, Helm release name **`monitoring`** - has to
+   match the `release: monitoring` label already in `k8s/base/monitoring/`,
+   or Prometheus silently ignores those resources.
+3. Create three ECR repos, one per environment.
+4. Register GitHub's OIDC provider once, then create three IAM roles - one
+   per environment, each scoped by the GitHub `environment:` claim, each
+   granted ECR push (own repo only) + `eks:DescribeCluster`.
+5. Map each role into the cluster (`aws-auth` or Access Entries) and give it
+   a `Role`/`RoleBinding` in its own namespace - a valid IAM role still gets
+   refused by Kubernetes without this; the two systems are independent.
+6. In GitHub: create the `dev`/`qa`/`prod` Environments with their
+   variables, set the repo-level `AWS_REGION` variable and the `SONAR_*`
+   secrets, and turn on branch protection for `main`.
+7. Manually create the four namespaces and the secrets (`app-secrets` x3,
+   `postgres-credentials` once, same password across all four) - exact
+   commands are already in the comments of `k8s/base/app/secret.yaml` and
+   `k8s/base/db/secret.yaml`.
+8. Push to `develop` / `release-qa` / `main` - that's the whole trigger.
+   Watch the Actions tab; once green, `kubectl get pods` / `get ingress` in
+   that namespace confirms it's actually running.
 
 ## Local development (no Kubernetes needed)
 
