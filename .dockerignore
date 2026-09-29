@@ -2,6 +2,11 @@
 **/.git
 **/.idea
 **/*.iml
+.github
 k8s
 scripts
 *.md
+
+# secrets - never send these into the build context, even though the
+# Dockerfile only COPYs app/pom.xml and app/src explicitly today
+docker/.env
