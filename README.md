@@ -112,10 +112,6 @@ docker/
 k8s/
   base/                         The real manifests - see "Kustomize" below
   overlays/{dev,qa,prod}/       Per-environment patches on top of base/
-scripts/build-and-push.sh      LEGACY - a manual build+push script from before
-                                 the CI pipeline existed. Fully superseded by
-                                 .github/workflows/ci_cd.yaml; kept only for
-                                 reference, not part of the real deploy path.
 ```
 
 The EKS cluster, ECR repos, and ALB controller IRSA setup are **not**
